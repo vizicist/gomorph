@@ -1,7 +1,7 @@
 package morph
 
 import (
-	"log"
+	"fmt"
 	"time"
 )
 
@@ -27,16 +27,16 @@ const (
 
 // OneMorph is a single Morph
 type OneMorph struct {
-	idx              uint8
-	opened           bool
-	serialNum        string
-	width            float32
-	height           float32
-	fwVersionMajor   uint8
-	fwVersionMinor   uint8
-	fwVersionBuild   uint8
-	fwVersionRelease uint8
-	deviceID         int
+	Idx              uint8
+	Opened           bool
+	SerialNum        string
+	Width            float32
+	Height           float32
+	FwVersionMajor   uint8
+	FwVersionMinor   uint8
+	FwVersionBuild   uint8
+	FwVersionRelease uint8
+	DeviceID         int
 }
 
 // MaxForce Might need to be adjusted at some point
@@ -45,19 +45,16 @@ var MaxForce float32 = 1500.0
 // CursorDeviceCallbackFunc xxx
 type CursorDeviceCallbackFunc func(e CursorDeviceEvent)
 
-func Init() ([]OneMorph, error) {
+func Init(serial string) ([]OneMorph, error) {
 	// The initialize func is platform-specific,
 	// See windowsmorph.go
-	morphs, err := initialize()
-	return morphs, err
+	return initialize(serial)
 }
 
 // Start xxx
-func Start(morphs []OneMorph, callback CursorDeviceCallbackFunc, forceFactor float32) {
-
+func Start(morphs []OneMorph, callback CursorDeviceCallbackFunc, forceFactor float32) error {
 	if len(morphs) == 0 {
-		log.Printf("No Morphs were found\n")
-		return
+		return fmt.Errorf("morph.Start: morphs array is empty!?")
 	}
 	for {
 		for _, m := range morphs {

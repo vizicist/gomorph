@@ -244,33 +244,33 @@ import (
 )
 
 func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) {
-	status := C.SenselReadSensor(C.uchar(m.idx))
+	status := C.SenselReadSensor(C.uchar(m.Idx))
 	if status != C.SENSEL_OK {
-		log.Printf("Morph: SenselReadSensor for idx=%d returned %d", m.idx, status)
+		log.Printf("Morph: SenselReadSensor for idx=%d returned %d", m.Idx, status)
 	}
-	numFrames := C.SenselGetNumAvailableFrames(C.uchar(m.idx))
+	numFrames := C.SenselGetNumAvailableFrames(C.uchar(m.Idx))
 	if numFrames <= 0 {
 		return
 	}
-	// log.Printf("Morph: FRAMES ARE AVAILABLE!! idx=%d numFrames=%d\n", m.idx, numFrames)
+	// log.Printf("Morph: FRAMES ARE AVAILABLE!! idx=%d numFrames=%d\n", m.Idx, numFrames)
 	nf := int(numFrames)
 	for n := 0; n < nf; n++ {
 		var frame C.struct_goSenselFrameData
-		status := C.SenselGetFrame(C.uchar(m.idx), &frame)
+		status := C.SenselGetFrame(C.uchar(m.Idx), &frame)
 		if status != C.SENSEL_OK {
-			log.Printf("Morph: SenselGetFrame of idx=%d returned %d\n", m.idx, status)
+			log.Printf("Morph: SenselGetFrame of idx=%d returned %d\n", m.Idx, status)
 			continue
 		}
 		nc := int(frame.n_contacts)
 		for n := 0; n < nc; n++ {
 			var contact C.struct_goSenselContact
-			status = C.SenselGetContact(C.uchar(m.idx), C.uchar(n), &contact)
+			status = C.SenselGetContact(C.uchar(m.Idx), C.uchar(n), &contact)
 			if status != C.SENSEL_OK {
-				log.Printf("Morph: SenselGetContact of morph_idx=%d n=%d returned %d\n", m.idx, n, status)
+				log.Printf("Morph: SenselGetContact of morph_idx=%d n=%d returned %d\n", m.Idx, n, status)
 				continue
 			}
-			xNorm := float32(contact.x_pos) / m.width
-			yNorm := float32(contact.y_pos) / m.height
+			xNorm := float32(contact.x_pos) / m.Width
+			yNorm := float32(contact.y_pos) / m.Height
 			zNorm := float32(contact.total_force) / MaxForce
 			zNorm *= forceFactor
 			area := float32(contact.area)
@@ -291,7 +291,7 @@ func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 
 			if DebugMorph {
 				log.Printf("DebugMorph: serial=%s contact_id=%d morph_idx=%d n=%d state=%d xNorm=%f yNorm=%f zNorm=%f\n",
-					m.serialNum, contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
+					m.SerialNum, contact.id, m.Idx, n, contact.state, xNorm, yNorm, zNorm)
 			}
 
 			// make the coordinate space match OpenGL and Freeframe
@@ -324,17 +324,26 @@ func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 }
 
 // Initialize xxx
-func initialize() ([]OneMorph, error) {
+func initialize(serial string) ([]OneMorph, error) {
 
 	numdevices := int(C.SenselNumDevices())
 
-	allMorphs := make([]OneMorph, numdevices)
+	morphs := make([]OneMorph, 0)
 
 	for idx := uint8(0); idx < uint8(numdevices); idx++ {
 
-		m := &allMorphs[idx]
-		m.idx = idx
-		m.serialNum = C.GoString(C.SenselDeviceSerialNum(C.uchar(idx)))
+		thisSerial := C.GoString(C.SenselDeviceSerialNum(C.uchar(idx)))
+
+		if serial != "*" && thisSerial != serial {
+			if DebugMorph {
+				log.Printf("SKIPPING serial=%s\n", thisSerial)
+			}
+			continue
+		}
+
+		m := OneMorph{}
+		m.Idx = idx
+		m.SerialNum = thisSerial
 
 		status := C.SenselOpenDeviceByID(C.uchar(idx))
 		if status != C.SENSEL_OK {
@@ -350,25 +359,28 @@ func initialize() ([]OneMorph, error) {
 		var firmwareinfo C.struct_goSenselFirmwareInfo
 		status = C.SenselGetFirmwareInfo(C.uchar(idx), &firmwareinfo)
 		if status != C.SENSEL_OK {
-			return nil, fmt.Errorf("SenselGetFirmwareInfo of %s returned %d", m.serialNum, status)
+			return nil, fmt.Errorf("SenselGetFirmwareInfo of %s returned %d", m.SerialNum, status)
 		}
 
-		status = C.SenselSetupAndStart(C.uchar(m.idx))
+		status = C.SenselSetupAndStart(C.uchar(m.Idx))
 		if status != C.SENSEL_OK {
-			return nil, fmt.Errorf("SenselSetupAndStart of %s returned %d", m.serialNum, status)
+			return nil, fmt.Errorf("SenselSetupAndStart of %s returned %d", m.SerialNum, status)
 		}
 
-		m.opened = true
-		m.width = float32(sensorinfo.width)
-		m.height = float32(sensorinfo.height)
-		m.fwVersionMajor = uint8(firmwareinfo.fw_version_major)
-		m.fwVersionMinor = uint8(firmwareinfo.fw_version_minor)
-		m.fwVersionBuild = uint8(firmwareinfo.fw_version_build)
-		m.fwVersionRelease = uint8(firmwareinfo.fw_version_release)
-		m.deviceID = int(firmwareinfo.device_id)
+		m.Opened = true
+		m.Width = float32(sensorinfo.width)
+		m.Height = float32(sensorinfo.height)
+		m.FwVersionMajor = uint8(firmwareinfo.fw_version_major)
+		m.FwVersionMinor = uint8(firmwareinfo.fw_version_minor)
+		m.FwVersionBuild = uint8(firmwareinfo.fw_version_build)
+		m.FwVersionRelease = uint8(firmwareinfo.fw_version_release)
+		m.DeviceID = int(firmwareinfo.device_id)
 
-		log.Printf("Morph Opened: idx=%d serial=%s firmware=%d.%d.%d suceeded\n",
-			m.idx, m.serialNum, m.fwVersionMajor, m.fwVersionMinor, m.fwVersionBuild)
+		morphs = append(morphs, m)
+
 	}
-	return allMorphs, nil
+	if len(morphs) == 0 {
+		return nil, fmt.Errorf("could not open any Morph matching serial=%s", serial)
+	}
+	return morphs, nil
 }
