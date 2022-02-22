@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             // "program": "${fileDirname}"
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/gomorph/gomorph.go",
+            "program": "${workspaceFolder}/gomorph.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder}",             },
             "args": []

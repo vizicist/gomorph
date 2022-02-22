@@ -35,11 +35,13 @@ func main() {
 		return
 	}
 
+	fmt.Printf("MAIN: start\n")
 	morphs, err := morph.Init(*serialPtr)
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
 		return
 	}
+	fmt.Printf("MAIN: B\n")
 
 	for _, m := range morphs {
 		fmt.Printf("Opened: Morph idx=%d serial=%s firmware=%d.%d.%d\n",

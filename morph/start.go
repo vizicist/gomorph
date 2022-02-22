@@ -48,6 +48,8 @@ type CursorDeviceCallbackFunc func(e CursorDeviceEvent)
 func Init(serial string) ([]OneMorph, error) {
 	// The initialize func is platform-specific,
 	// See windowsmorph.go
+	fmt.Printf("func Morph.Init calling initialize\n")
+	// SenselInit()
 	return initialize(serial)
 }
 
