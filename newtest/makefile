@@ -6,7 +6,6 @@ morphtestm1 : morphtest.c $(M1LIB)
 
 WINX64LIB = ../SenselLib/winx64/LibSensel.lib
 
-WINCC = cl
 WINCC = gcc
 winx64test.exe : morphtest.c 
 	$(WINCC) -I ../SenselLib/include morphtest.c $(WINX64LIB) -o winx64test
