@@ -5,18 +5,17 @@ SenselDeviceList sensellist;
 
 int main()
 {
-
-	printf("Hello World\n");
 	senselGetDeviceList(&sensellist);
 	int ndevices = sensellist.num_devices;
-	printf("%d\n",ndevices);
+	printf("ndevices = %d\n",ndevices);
 	int n;
 	for ( n=0; n<ndevices; n++ ) {
-		printf("opening %s\n",sensellist.devices[n].serial_num);
+		printf("n=%d serial_num=%s\n",n,sensellist.devices[n].serial_num);
 		unsigned char idx = sensellist.devices[n].idx;
 		SENSEL_HANDLE h;
+		printf("Trying to open device with idx = %d\n",idx);
 		SenselStatus status = senselOpenDeviceByID(&h,idx);
-		printf("status = %d\n",status);
+		printf("status = %d  handle = %ld\n",status,(long)h);
 	}
 	return(0);
 }
