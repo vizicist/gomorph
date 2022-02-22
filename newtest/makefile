@@ -6,18 +6,17 @@ morphtestm1 : morphtest.c $(M1LIB)
 
 WINX64LIB = ../SenselLib/winx64/LibSensel.lib
 
+WINCC = cl
+WINCC = gcc
 winx64test.exe : morphtest.c 
-	gcc -I ../SenselLib/include morphtest.c $(WINX64LIB) -o winx64test
+	$(WINCC) -I ../SenselLib/include morphtest.c $(WINX64LIB) -o winx64test
 
 m1test :
-	make clean
+	rm -f morphtestm1
 	make morphtestm1
 	./morphtestm1
 
 winx64test :
-	$(MAKE) clean
+	del winx64test.exe
 	$(MAKE) winx64test.exe
 	.\winx64test.exe
-
-clean : 
-	rm -f morphtest.o morphtest
