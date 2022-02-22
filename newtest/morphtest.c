@@ -15,7 +15,7 @@ int main()
 		SENSEL_HANDLE h;
 		printf("Trying to open device with idx = %d\n",idx);
 		SenselStatus status = senselOpenDeviceByID(&h,idx);
-		printf("status = %d  handle = %ld\n",status,(long long)h);
+		printf("status = %d  handle = %lld\n",status,(long long)h);
 	}
 	return(0);
 }
