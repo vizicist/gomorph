@@ -65,9 +65,8 @@ void
 SenselInit()
 {
 	if ( ! senselLoaded ) {
-printf("SENSELINIT is calling GetDeviceList !\n");
 		senselGetDeviceList(&sensellist);
-printf("After GetDeviceList num_devices=%d!\n",sensellist.num_devices);
+		printf("SenselInit: num_devices = %d\n", sensellist.num_devices);
 		senselLoaded = 1;
 	}
 }
@@ -243,14 +242,14 @@ import (
 	"log"
 )
 
-func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) {
+func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) (err error) {
 	status := C.SenselReadSensor(C.uchar(m.Idx))
 	if status != C.SENSEL_OK {
-		log.Printf("Morph: SenselReadSensor for idx=%d returned %d", m.Idx, status)
+		return fmt.Errorf("SenselReadSensor for idx=%d returned %d", m.Idx, status)
 	}
 	numFrames := C.SenselGetNumAvailableFrames(C.uchar(m.Idx))
 	if numFrames <= 0 {
-		return
+		return nil
 	}
 	// log.Printf("Morph: FRAMES ARE AVAILABLE!! idx=%d numFrames=%d\n", m.Idx, numFrames)
 	nf := int(numFrames)
@@ -258,16 +257,14 @@ func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 		var frame C.struct_goSenselFrameData
 		status := C.SenselGetFrame(C.uchar(m.Idx), &frame)
 		if status != C.SENSEL_OK {
-			log.Printf("Morph: SenselGetFrame of idx=%d returned %d\n", m.Idx, status)
-			continue
+			return fmt.Errorf("SenselGetFrame of idx=%d returned %d\n", m.Idx, status)
 		}
 		nc := int(frame.n_contacts)
 		for n := 0; n < nc; n++ {
 			var contact C.struct_goSenselContact
 			status = C.SenselGetContact(C.uchar(m.Idx), C.uchar(n), &contact)
 			if status != C.SENSEL_OK {
-				log.Printf("Morph: SenselGetContact of morph_idx=%d n=%d returned %d\n", m.Idx, n, status)
-				continue
+				return fmt.Errorf("SenselGetContact of morph_idx=%d n=%d returned %d\n", m.Idx, n, status)
 			}
 			xNorm := float32(contact.x_pos) / m.Width
 			yNorm := float32(contact.y_pos) / m.Height
@@ -283,7 +280,7 @@ func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 			case CursorUp:
 				ddu = "up"
 			default:
-				log.Printf("Morph: Invalid value for contact.state - %d\n", contact.state)
+				return fmt.Errorf("Morph: Invalid value for contact.state - %d\n", contact.state)
 				continue
 			}
 
@@ -321,18 +318,15 @@ func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 			callback(ev)
 		}
 	}
+	return nil
 }
 
 // Initialize xxx
 func initialize(serial string) ([]OneMorph, error) {
 
-	fmt.Printf("Hello from func initialize serial=%s\n",serial)
-
 	C.SenselInit()
 
 	numdevices := int(C.SenselNumDevices())
-
-	fmt.Printf("in func initialize numdevices=%d\n",numdevices)
 
 	morphs := make([]OneMorph, 0)
 
@@ -340,12 +334,7 @@ func initialize(serial string) ([]OneMorph, error) {
 
 		thisSerial := C.GoString(C.SenselDeviceSerialNum(C.uchar(idx)))
 
-		fmt.Printf("Looping in initialize thisSerial=%s\n",thisSerial)
-
 		if serial != "*" && thisSerial != serial {
-			if DebugMorph {
-				log.Printf("SKIPPING serial=%s\n", thisSerial)
-			}
 			continue
 		}
 
@@ -353,11 +342,9 @@ func initialize(serial string) ([]OneMorph, error) {
 		m.Idx = idx
 		m.SerialNum = thisSerial
 
-		fmt.Printf("Trying to Open Device by idx=%d\n",idx)
-
 		status := C.SenselOpenDeviceByID(C.uchar(idx))
 		if status != C.SENSEL_OK {
-			return nil, fmt.Errorf("SenselOpenDeviceBySerialNum of idx=%d returned %d", idx, status)
+			return nil, fmt.Errorf("SenselOpenDeviceByID of idx=%d returned %d", idx, status)
 		}
 
 		var sensorinfo C.struct_goSenselSensorInfo

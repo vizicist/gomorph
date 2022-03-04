@@ -3,6 +3,7 @@ package morph
 import (
 	"fmt"
 	"time"
+	"log"
 )
 
 var DebugMorph bool = false
@@ -60,7 +61,10 @@ func Start(morphs []OneMorph, callback CursorDeviceCallbackFunc, forceFactor flo
 	}
 	for {
 		for _, m := range morphs {
-			m.readFrames(callback, forceFactor)
+			err := m.readFrames(callback, forceFactor)
+			if err != nil {
+				log.Printf("readFrames: err=%s\n",err)
+			} 
 		}
 		time.Sleep(time.Millisecond)
 	}

@@ -85,7 +85,7 @@ func doListen(ip string, port int) {
 		for {
 			packet, err := server.ReceivePacket(conn)
 			if err != nil {
-				fmt.Println("Server error: " + err.Error())
+				fmt.Println("Error in ReceivePacket: : " + err.Error())
 				os.Exit(1)
 			}
 
