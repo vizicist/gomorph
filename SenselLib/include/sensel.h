@@ -189,6 +189,7 @@ extern "C" {
     unsigned char   content_bit_mask;  // Data contents of the frame
     int             lost_frame_count;  // Number of frames dropped
     unsigned char   n_contacts;        // Number of contacts
+    unsigned int    timestamp;        // Time Stamp in microseconds 
     SenselContact   *contacts;         // Array of contacts
     float           *force_array;      // Force image buffer
     unsigned char   *labels_array;     // Labels buffer
@@ -202,7 +203,7 @@ extern "C" {
   {
     unsigned char idx;                 // ID of the sensor
     unsigned char serial_num[64];      // Serial number of the sensor
-    unsigned char com_port[64];        // Com port associated with the sensor
+    unsigned char com_port[256];       // Com port associated with the sensor (or HID interface name)
   } SenselDeviceID;
 
   /*!
@@ -509,6 +510,24 @@ extern "C" {
   SenselStatus WINAPI senselGetDynamicBaselineEnabled(SENSEL_HANDLE handle, unsigned char *val);
 
   /*!
+  * @param      handle Sensel device handle
+  * @param      val    Pointer to contain current setting
+  * @return     SENSEL_OK on success or error
+  * @discussion Gets whether the trackpad will send a mouse click
+  */
+  SENSEL_API
+  SenselStatus WINAPI senselGetForcepadEnabled(SENSEL_HANDLE handle, unsigned char *val);
+
+  /*!
+  * @param      handle Sensel device handle
+  * @param      val    Pointer to contain current setting
+  * @return     SENSEL_OK on success or error
+  * @discussion Sets whether the trackpad will send a mouse click
+  */
+  SENSEL_API
+  SenselStatus WINAPI senselSetForcepadEnabled(SENSEL_HANDLE handle, unsigned char val);
+
+  /*!
    * @param      handle Sensel device handle
    * @param      num    Number of buffers
    * @return     SENSEL_OK on success or error
@@ -629,6 +648,16 @@ extern "C" {
    */
   SENSEL_API
   SenselStatus WINAPI senselWriteRegVS(SENSEL_HANDLE handle, unsigned char reg, unsigned int size, unsigned char *buf, unsigned int *write_size);
+
+  SENSEL_API
+  SenselStatus WINAPI senselRefreshDevice(SENSEL_HANDLE handle);
+
+  SENSEL_API
+  SenselStatus WINAPI senselStartWatchdog(SENSEL_HANDLE handle);
+
+  SENSEL_API
+  SenselStatus WINAPI senselStopWatchdog(SENSEL_HANDLE handle);
+
 
 #ifdef __cplusplus
 }

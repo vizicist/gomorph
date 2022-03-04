@@ -1,8 +1,6 @@
-// +build windows
-
 package morph
 
-// #cgo LDFLAGS: -L. "${SRCDIR}/../SenselLib/x64/LibSensel.dll"
+// #cgo LDFLAGS: -L${SRCDIR}/../SenselLib/winx64 -lLibSensel
 /*
 #include <stdlib.h>
 #include <stdio.h>
