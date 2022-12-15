@@ -241,14 +241,14 @@ import (
 	"log"
 )
 
-func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) {
+func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) error {
 	status := C.SenselReadSensor(C.uchar(m.Idx))
 	if status != C.SENSEL_OK {
-		log.Printf("Morph: SenselReadSensor for idx=%d returned %d", m.Idx, status)
+		return fmt.Errorf("Morph: SenselReadSensor for idx=%d returned %d", m.Idx, status)
 	}
 	numFrames := C.SenselGetNumAvailableFrames(C.uchar(m.Idx))
 	if numFrames <= 0 {
-		return
+		return nil
 	}
 	// log.Printf("Morph: FRAMES ARE AVAILABLE!! idx=%d numFrames=%d\n", m.Idx, numFrames)
 	nf := int(numFrames)
@@ -256,16 +256,14 @@ func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 		var frame C.struct_goSenselFrameData
 		status := C.SenselGetFrame(C.uchar(m.Idx), &frame)
 		if status != C.SENSEL_OK {
-			log.Printf("Morph: SenselGetFrame of idx=%d returned %d\n", m.Idx, status)
-			continue
+			return fmt.Errorf("Morph: SenselGetFrame of idx=%d returned %d\n", m.Idx, status)
 		}
 		nc := int(frame.n_contacts)
 		for n := 0; n < nc; n++ {
 			var contact C.struct_goSenselContact
 			status = C.SenselGetContact(C.uchar(m.Idx), C.uchar(n), &contact)
 			if status != C.SENSEL_OK {
-				log.Printf("Morph: SenselGetContact of morph_idx=%d n=%d returned %d\n", m.Idx, n, status)
-				continue
+				return fmt.Errorf("Morph: SenselGetContact of morph_idx=%d n=%d returned %d\n", m.Idx, n, status)
 			}
 			xNorm := float32(contact.x_pos) / m.Width
 			yNorm := float32(contact.y_pos) / m.Height
@@ -319,6 +317,7 @@ func (m OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 			callback(ev)
 		}
 	}
+	return nil
 }
 
 // Initialize xxx
